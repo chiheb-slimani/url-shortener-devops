@@ -111,6 +111,7 @@ kubectl apply -f k8s/ingress.yaml
 - `.github/workflows/ci.yaml` runs tests on PRs and builds the Docker image on main (optional push).
 - `.github/workflows/codeql.yaml` runs CodeQL SAST on push/PR.
 - `.github/workflows/dast.yaml` runs OWASP ZAP baseline scan on main and uploads a report.
+- Docker push uses either `DOCKERHUB_USERNAME` + `DOCKERHUB_TOKEN` or `DOCKER_USERNAME` + `DOCKER_PASSWORD` secrets.
 
 ## How to demo
 1. Start the API locally or with Docker.
