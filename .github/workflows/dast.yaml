@@ -1,0 +1,41 @@
+name: dast
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  zap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t url-shortener:ci .
+      - name: Run container
+        run: |
+          docker run -d --name url-shortener -p 8000:8000 url-shortener:ci
+          READY=0
+          for i in {1..20}; do
+            if curl -s http://127.0.0.1:8000/healthz > /dev/null; then
+              READY=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$READY" != "1" ]; then
+            docker logs url-shortener
+            exit 1
+          fi
+      - name: ZAP baseline scan
+        run: |
+          docker run --rm --network host -v ${{ github.workspace }}:/zap/wrk/:rw \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py -t http://127.0.0.1:8000 -r zap_report.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: zap_report.html
+      - name: Stop container
+        if: always()
+        run: docker rm -f url-shortener
