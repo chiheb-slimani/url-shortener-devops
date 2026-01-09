@@ -49,25 +49,34 @@ set TITLE=%~2
 set BODY=%~3
 set BRANCH=pr/%SLUG%
 
-git show-ref --verify --quiet refs/heads/%BRANCH%
+git checkout %BRANCH%
 if errorlevel 1 (
-  git checkout -b %BRANCH%
-) else (
-  git checkout %BRANCH%
+  git show-ref --verify --quiet refs/remotes/origin/%BRANCH%
+  if errorlevel 1 (
+    git checkout -b %BRANCH%
+  ) else (
+    git checkout -b %BRANCH% origin/%BRANCH%
+  )
 )
-
+if not exist pr-notes mkdir pr-notes
 if not exist pr-notes\%SLUG%.md (
-  if not exist pr-notes mkdir pr-notes
   echo %TITLE%> pr-notes\%SLUG%.md
   echo %BODY%>> pr-notes\%SLUG%.md
   git add pr-notes\%SLUG%.md
-  git commit -m "%TITLE%"
+  git diff --cached --quiet
+  if errorlevel 1 (
+    git commit -m "%TITLE%"
+  )
 )
-
 git push -u origin %BRANCH%
 
 > "%TEMP%\pr.json" echo { "title": "%TITLE%", "head": "%BRANCH%", "base": "main", "body": "%BODY%" }
-curl -s -H "Authorization: Bearer %GITHUB_TOKEN%" -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/%OWNER%/%REPO%/pulls -d @"%TEMP%\pr.json"
+curl -s -H "Authorization: Bearer %GITHUB_TOKEN%" -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/%OWNER%/%REPO%/pulls -d @"%TEMP%\pr.json" > "%TEMP%\pr_response.json"
+for /f "usebackq delims=" %%L in (`findstr /i /c:"\"html_url\"" "%TEMP%\pr_response.json"`) do (
+  echo PR %%L
+  goto :after_pr
+)
+:after_pr
 
 git checkout main
 exit /b 0
