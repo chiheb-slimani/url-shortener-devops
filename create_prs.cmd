@@ -8,7 +8,7 @@ set REPO=url-shortener-devops
 
 if not defined GITHUB_TOKEN (
   if exist "%USERPROFILE%\.github_token" (
-    for /f "usebackq delims= eol=" %%T in ("%USERPROFILE%\.github_token") do set "GITHUB_TOKEN=%%T"
+    set /p GITHUB_TOKEN=<"%USERPROFILE%\.github_token"
   )
 )
 if defined GITHUB_TOKEN (
