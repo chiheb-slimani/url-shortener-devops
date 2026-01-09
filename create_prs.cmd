@@ -6,12 +6,15 @@ cd /d C:\Users\lenovo\Desktop\projets\devops
 set OWNER=chiheb-slimani
 set REPO=url-shortener-devops
 
-if "%GITHUB_TOKEN%"=="" (
+if not defined GITHUB_TOKEN (
   if exist "%USERPROFILE%\.github_token" (
-    set /p GITHUB_TOKEN=<"%USERPROFILE%\.github_token"
+    for /f "usebackq delims= eol=" %%T in ("%USERPROFILE%\.github_token") do set "GITHUB_TOKEN=%%T"
   )
 )
-if "%GITHUB_TOKEN%"=="" (
+if defined GITHUB_TOKEN (
+  set "GITHUB_TOKEN=%GITHUB_TOKEN:"=%"
+)
+if not defined GITHUB_TOKEN (
   echo GITHUB_TOKEN is not set. Set it or place a token in %USERPROFILE%\.github_token
   exit /b 1
 )
