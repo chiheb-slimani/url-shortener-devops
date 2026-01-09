@@ -49,13 +49,21 @@ set TITLE=%~2
 set BODY=%~3
 set BRANCH=pr/%SLUG%
 
-git checkout -b %BRANCH%
-if not exist pr-notes mkdir pr-notes
-echo %TITLE%> pr-notes\%SLUG%.md
-echo %BODY%>> pr-notes\%SLUG%.md
+git show-ref --verify --quiet refs/heads/%BRANCH%
+if errorlevel 1 (
+  git checkout -b %BRANCH%
+) else (
+  git checkout %BRANCH%
+)
 
-git add pr-notes\%SLUG%.md
-git commit -m "%TITLE%"
+if not exist pr-notes\%SLUG%.md (
+  if not exist pr-notes mkdir pr-notes
+  echo %TITLE%> pr-notes\%SLUG%.md
+  echo %BODY%>> pr-notes\%SLUG%.md
+  git add pr-notes\%SLUG%.md
+  git commit -m "%TITLE%"
+)
+
 git push -u origin %BRANCH%
 
 > "%TEMP%\pr.json" echo { "title": "%TITLE%", "head": "%BRANCH%", "base": "main", "body": "%BODY%" }
