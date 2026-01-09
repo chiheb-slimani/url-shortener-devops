@@ -7,7 +7,12 @@ set OWNER=chiheb-slimani
 set REPO=url-shortener-devops
 
 if "%GITHUB_TOKEN%"=="" (
-  echo GITHUB_TOKEN is not set. Run: set GITHUB_TOKEN=your_token
+  if exist "%USERPROFILE%\.github_token" (
+    set /p GITHUB_TOKEN=<"%USERPROFILE%\.github_token"
+  )
+)
+if "%GITHUB_TOKEN%"=="" (
+  echo GITHUB_TOKEN is not set. Set it or place a token in %USERPROFILE%\.github_token
   exit /b 1
 )
 
