@@ -11,15 +11,16 @@ if not defined GITHUB_TOKEN (
     set /p GITHUB_TOKEN=<"%USERPROFILE%\.github_token"
   )
 )
-if defined GITHUB_TOKEN (
-  set "GITHUB_TOKEN=%GITHUB_TOKEN:"=%"
-)
+if defined GITHUB_TOKEN set "GITHUB_TOKEN=%GITHUB_TOKEN:"=%"
 if not defined GITHUB_TOKEN (
   echo GITHUB_TOKEN is not set. Set it or place a token in %USERPROFILE%\.github_token
   exit /b 1
 )
 
-curl -s -f -X POST -H "Authorization: Bearer %GITHUB_TOKEN%" -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/%OWNER%/%REPO%/actions/workflows/ci.yaml/dispatches -d "{\"ref\":\"main\"}" >nul
+set "DISPATCH_JSON=%TEMP%\dispatch_ci.json"
+> "%DISPATCH_JSON%" echo { "ref": "main" }
+curl -s -f -X POST -H "Authorization: Bearer %GITHUB_TOKEN%" -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/%OWNER%/%REPO%/actions/workflows/ci.yaml/dispatches -d @"%DISPATCH_JSON%" >nul
+del "%DISPATCH_JSON%" >nul 2>nul
 if errorlevel 1 (
   echo Failed to dispatch CI workflow.
   exit /b 1
