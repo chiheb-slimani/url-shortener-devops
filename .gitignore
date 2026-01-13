@@ -4,3 +4,5 @@ __pycache__/
 data.db
 env/
 .env
+data/
+docker

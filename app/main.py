@@ -30,7 +30,7 @@ logger.setLevel(logging.INFO)
 REQUEST_COUNT = Counter("request_count", "HTTP request count", ["method", "route", "status"])
 REQUEST_LATENCY = Histogram("request_latency_seconds", "HTTP request latency", ["method", "route"])
 
-resource = Resource.create({"service.name": "url-shortener"})
+resource = Resource(attributes={"service.name": "url-shortener"})
 provider = TracerProvider(resource=resource)
 provider.add_span_processor(SimpleSpanProcessor(ConsoleSpanExporter()))
 trace.set_tracer_provider(provider)
@@ -100,17 +100,17 @@ async def observe(request: Request, call_next):
 
 
 @app.get("/healthz")
-def healthz():
+async def healthz():
     return {"status": "ok"}
 
 
 @app.get("/metrics")
-def metrics():
+async def metrics():
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 @app.post("/shorten")
-def shorten(body: ShortenRequest):
+async def shorten(body: ShortenRequest):
     if not is_valid_url(body.url):
         raise HTTPException(status_code=400, detail="invalid url")
     code = None
@@ -129,7 +129,7 @@ def shorten(body: ShortenRequest):
 
 
 @app.get("/{code}")
-def resolve(code: str):
+async def resolve(code: str):
     row = conn.execute("SELECT url FROM urls WHERE code = ?", (code,)).fetchone()
     if not row:
         return JSONResponse({"error": "not found"}, status_code=404)
